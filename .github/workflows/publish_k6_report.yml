@@ -1,0 +1,65 @@
+name: Publish K6 Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      k6_json_file:
+        description: 'Path to the K6 JSON results file in the repository'
+        required: true
+        type: string
+      test_name:
+        description: 'Name of the test'
+        required: true
+        type: string
+      environment:
+        description: 'Test environment (e.g., DEV, QA, PROD)'
+        required: true
+        type: string
+      confluence_space_key:
+        description: 'Confluence Space Key'
+        required: true
+        type: string
+      ancestor_page_id:
+        description: 'Parent Confluence Page ID'
+        required: true
+        type: string
+      page_title:
+        description: 'Title for the new Confluence page'
+        required: true
+        type: string
+
+jobs:
+  publish-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+        
+    - name: Read K6 JSON file
+      id: read_k6
+      run: |
+        K6_CONTENT=$(cat ${{ github.event.inputs.k6_json_file }})
+        echo "K6_CONTENT<<EOF" >> $GITHUB_ENV
+        echo "$K6_CONTENT" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+    - name: Run K6 Report Publisher
+      env:
+        CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+        TEST_NAME: ${{ github.event.inputs.test_name }}
+        ENVIRONMENT: ${{ github.event.inputs.environment }}
+        CONFLUENCE_SPACE_KEY: ${{ github.event.inputs.confluence_space_key }}
+        ANCESTOR_PAGE_ID: ${{ github.event.inputs.ancestor_page_id }}
+        PAGE_TITLE: ${{ github.event.inputs.page_title }}
+        K6_CONTENT: ${{ env.K6_CONTENT }}
+      run: python publish_k6_report.py 

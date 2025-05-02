@@ -1,0 +1,65 @@
+name: Publish JMeter Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      jtl_file:
+        description: 'Path to the JTL file in the repository'
+        required: true
+        type: string
+      test_name:
+        description: 'Name of the test'
+        required: true
+        type: string
+      environment:
+        description: 'Test environment (e.g., DEV, QA, PROD)'
+        required: true
+        type: string
+      confluence_space_key:
+        description: 'Confluence Space Key'
+        required: true
+        type: string
+      ancestor_page_id:
+        description: 'Parent Confluence Page ID'
+        required: true
+        type: string
+      page_title:
+        description: 'Title for the new Confluence page'
+        required: true
+        type: string
+
+jobs:
+  publish-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+        
+    - name: Read JTL file
+      id: read_jtl
+      run: |
+        JTL_CONTENT=$(cat ${{ github.event.inputs.jtl_file }})
+        echo "JTL_CONTENT<<EOF" >> $GITHUB_ENV
+        echo "$JTL_CONTENT" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+    - name: Run JMeter Report Publisher
+      env:
+        CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+        TEST_NAME: ${{ github.event.inputs.test_name }}
+        ENVIRONMENT: ${{ github.event.inputs.environment }}
+        CONFLUENCE_SPACE_KEY: ${{ github.event.inputs.confluence_space_key }}
+        ANCESTOR_PAGE_ID: ${{ github.event.inputs.ancestor_page_id }}
+        PAGE_TITLE: ${{ github.event.inputs.page_title }}
+        JTL_CONTENT: ${{ env.JTL_CONTENT }}
+      run: python publish_jmeter_report.py 
