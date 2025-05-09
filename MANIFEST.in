@@ -1,0 +1,2 @@
+include src/templates/report_template.html
+recursive-include src/templates *.html 

@@ -47,17 +47,18 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests
+        pip install -r requirements.txt
         
-    - name: Run NeoLoad Report Publisher
+    - name: Run Report Generator
       env:
-        NEOLOAD_API_TOKEN: ${{ secrets.NEOLOAD_API_TOKEN }}
         CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
-        WORKSPACE_ID: ${{ github.event.inputs.workspace_id }}
-        RESULT_ID: ${{ github.event.inputs.result_id }}
-        TEST_NAME: ${{ github.event.inputs.test_name }}
-        ENVIRONMENT: ${{ github.event.inputs.environment }}
-        CONFLUENCE_SPACE_KEY: ${{ github.event.inputs.confluence_space_key }}
-        ANCESTOR_PAGE_ID: ${{ github.event.inputs.ancestor_page_id }}
-        PAGE_TITLE: ${{ github.event.inputs.page_title }}
-      run: python publish_neoload_report.py 
+        CONFLUENCE_URL: ${{ secrets.CONFLUENCE_URL }}
+        CONFLUENCE_SPACE_ID: ${{ github.event.inputs.confluence_space_key }}
+        CONFLUENCE_ANCESTOR_PAGE_ID: ${{ github.event.inputs.ancestor_page_id }}
+      run: |
+        python3 src/main.py \
+          --input-file "tests/test_data/neoload_sample_results.csv" \
+          --test-name "${{ github.event.inputs.test_name }}" \
+          --environment "${{ github.event.inputs.environment }}" \
+          --processor neoload \
+          --output-dir reports 

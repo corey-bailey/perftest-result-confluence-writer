@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ test_name }} - Performance Test Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f5f7;
+            color: #172b4d;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 5px;
+            max-width: 1200px;
+            margin: auto;
+            box-shadow: 0 2px 4px rgba(9, 30, 66, 0.1);
+        }
+        h1, h2, h3 {
+            color: #0052cc;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .error {
+            color: #de350b;
+        }
+        .success {
+            color: #36b37e;
+        }
+        .graph-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ test_name }} - Performance Test Report</h1>
+        <p><strong>Environment:</strong> {{ environment }}</p>
+        <p><strong>Test Times:</strong> {{ test_times }}</p>
+        <p><strong>Test Duration:</strong> {{ test_duration }}</p>
+        <br>
+
+        <div class="section">
+            <h3><strong>High-Level Summary</strong></h3>
+            <p><strong>Average Response Time:</strong> {{ avg_response }}</p>
+            <p><strong>Transactions Per Second:</strong> {{ throughput }}</p>
+            <p><strong>Error Rate:</strong> {{ error_rate }}</p>
+            <p><strong>Obervations:</strong></p>{{ llm_observations }}</p>
+        </div>
+        <br>
+
+        <div class="section">
+            <h3><strong>Detailed Metrics</strong></h3>
+            {{ metrics_table|safe }}
+        </div>
+        <br>
+
+        <div class="section">
+            <h3><strong>Response Time Analysis</strong></h3>
+            <div class="graph-container">
+                {{ response_time_graph|safe }}
+            </div>
+        </div>
+        <br>
+
+        <div class="section">
+            <h3><strong>Throughput Analysis</strong></h3>
+            <div class="graph-container">
+                {{ throughput_graph|safe }}
+            </div>
+        </div>
+        <br>
+
+        <div class="section">
+            <h3><strong>APM Metrics: TBD</strong></h3>
+        </div>
+    </div>
+</body>
+</html> 

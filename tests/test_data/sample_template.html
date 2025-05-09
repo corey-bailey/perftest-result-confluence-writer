@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Performance Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ test_name }}</h1>
+        <h2>Environment: {{ environment }}</h2>
+        
+        <div class="overall-stats">
+            <h3>Overall Statistics</h3>
+            <p>Total Requests: {{ overall_stats['total_requests'] }}</p>
+            <p>Error Requests: {{ overall_stats['error_requests'] }}</p>
+            <p>Error Rate: {{ "%.2f"|format(overall_stats['error_rate']) }}%</p>
+            <p>Average Response Time: {{ "%.2f"|format(overall_stats['avg_response_time']) }} ms</p>
+            <p>Min Response Time: {{ "%.2f"|format(overall_stats['min_response_time']) }} ms</p>
+            <p>Max Response Time: {{ "%.2f"|format(overall_stats['max_response_time']) }} ms</p>
+            <p>Test Duration: {{ "%.2f"|format(overall_stats['test_duration']) }} seconds</p>
+        </div>
+        
+        <div class="metrics-table">
+            <h3>Transaction Metrics</h3>
+            {{ metrics_table|safe }}
+        </div>
+    </div>
+</body>
+</html> 

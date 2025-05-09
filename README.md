@@ -1,155 +1,190 @@
-# Performance Test Report Publisher
+# Performance Test Result Confluence Writer
 
-This project automates the process of publishing performance test results from various tools (NeoLoad, JMeter, and K6) to Confluence Cloud. It consists of Python scripts and GitHub Actions workflows that retrieve test results and create formatted report pages in Confluence.
+A Python application that processes performance test results from various tools (JMeter, k6, NeoLoad) and generates formatted reports for Confluence.
 
-## Supported Tools
+## Features
 
-The project supports three major performance testing tools:
+- Supports multiple performance testing tools:
+  - JMeter (.jtl files)
+  - k6 (.json files)
+  - NeoLoad (.csv files)
+- Automatic file type detection
+- Generates multiple report formats:
+  - HTML reports
+  - JSON reports
+  - Console tables
+  - Metrics tables
+- Detailed statistics including:
+  - Response times (min, max, average)
+  - Error rates
+  - Transaction counts
+  - Test duration
+  - Concurrent users over time
+  - Throughput analysis
+- GitHub Actions workflow for automated report generation and publishing
+- Optional LLM analysis of test results using Ollama
 
-1. **NeoLoad**
-   - Retrieves results via NeoLoad Web API
-   - Requires NeoLoad API token
-   - Supports detailed timing metrics and percentiles
+## Installation
 
-2. **JMeter**
-   - Processes JTL (JMeter Test Log) files
-   - Calculates comprehensive statistics
-   - Supports grouping by test name
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/perftest-result-confluence-writer.git
+cd perftest-result-confluence-writer
+```
 
-3. **K6**
-   - Processes JSON output from K6
-   - Handles K6-specific metrics
-   - Includes HTTP request statistics
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-## Prerequisites
+3. Install the package in editable mode:
+```bash
+pip install -e .
+```
 
-- Python 3.8 or higher
-- GitHub repository with Actions enabled
-- Confluence Cloud API token
-- Tool-specific requirements:
-  - NeoLoad: NeoLoad API token
-  - JMeter: JTL file output
-  - K6: JSON output file
+4. Configure environment variables:
+   - Copy `.env.example` to `.env`
+   - Update the values in `.env` with your configuration:
+     ```
+     # Confluence Configuration
+     CONFLUENCE_URL=https://your-domain.atlassian.net
+     CONFLUENCE_USERNAME=your-email@example.com
+     CONFLUENCE_TOKEN=your-api-token
+     CONFLUENCE_SPACE_ID=your-space-id
+     CONFLUENCE_ANCESTOR_PAGE_ID=your-ancestor-page-id
 
-## Setup
-
-1. Clone this repository
-
-2. Add the following secrets to your GitHub repository:
-   - `CONFLUENCE_API_TOKEN`: Your Confluence Cloud API token (Base64 encoded)
-   - `NEOLOAD_API_TOKEN`: Your NeoLoad API token (for NeoLoad reports only)
-
-3. Install the required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+     # Ollama Configuration (Optional)
+     OLLAMA_URL=http://localhost:11434
+     USE_OLLAMA=true
+     ```
 
 ## Usage
 
-### NeoLoad Reports
+### Local Usage
 
-1. Navigate to your GitHub repository's Actions tab
-2. Select the "Publish NeoLoad Report" workflow
-3. Click "Run workflow"
-4. Fill in the required inputs:
-   - Workspace ID: Your NeoLoad workspace ID
-   - Result ID: The ID of the test result to publish
-   - Test Name: Name of the performance test
-   - Environment: Test environment (e.g., DEV, QA, PROD)
-   - Confluence Space Key: Your Confluence space key
-   - Ancestor Page ID: ID of the parent page in Confluence
-   - Page Title: Title for the new report page
+The application automatically detects the type of performance test result file based on its extension and content structure. Run the application using:
 
-### JMeter Reports
+```bash
+python src/main.py --input-file path/to/results/file --test-name "Test Name" --environment "Environment" --processor [jmeter|k6|neoload] --output-dir reports
+```
 
-1. Run your JMeter test and save the results as a JTL file
-2. Add the JTL file to your repository
-3. Go to the Actions tab
-4. Select "Publish JMeter Report"
-5. Fill in the required inputs:
-   - JTL file path: Path to your JTL file in the repository
-   - Test Name: Name of the test
-   - Environment: Test environment
-   - Confluence Space Key: Your Confluence space key
-   - Ancestor Page ID: ID of the parent page
-   - Page Title: Title for the new report page
+### Command Line Arguments
 
-### K6 Reports
+- `--input-file`: Path to the performance test results file (required)
+- `--test-name`: Name of the test run (required)
+- `--environment`: Environment where the test was run (required)
+- `--processor`: Type of processor to use (optional, auto-detected if not specified)
+- `--output-dir`: Directory to save reports (optional)
 
-1. Run your K6 test with JSON output:
-   ```bash
-   k6 run --out json=results.json your-test.js
-   ```
-2. Add the JSON file to your repository
-3. Go to the Actions tab
-4. Select "Publish K6 Report"
-5. Fill in the required inputs:
-   - K6 JSON file path: Path to your JSON file in the repository
-   - Test Name: Name of the test
-   - Environment: Test environment
-   - Confluence Space Key: Your Confluence space key
-   - Ancestor Page ID: ID of the parent page
-   - Page Title: Title for the new report page
+Example:
+```bash
+python src/main.py --input-file tests/test_data/jmeter_sample_results.jtl --test-name "Load Test" --environment "Production" --processor jmeter --output-dir reports
+```
 
-## Report Contents
+### LLM Analysis with Ollama
 
-Each report includes:
+The application can optionally use Ollama to analyze performance test results and provide insights. To enable this:
 
-### Common Elements
-- Test name and environment
-- Run timestamp
-- Formatted HTML table with metrics
+1. Install and run Ollama locally or on a server
+2. Set the following environment variables in `.env`:
+   - `OLLAMA_URL`: URL of your Ollama server (default: http://localhost:11434)
+   - `USE_OLLAMA`: Set to "true" to enable LLM analysis
 
-### Tool-Specific Metrics
+The LLM analysis will appear at the top of the HTML report and in the Confluence page.
 
-#### NeoLoad
-- User Path metrics
-- Elements Per Second
-- Min, Avg, Max response times
-- Percentiles (50, 90, 95, 99)
-- Error counts
+### GitHub Actions Workflow
 
-#### JMeter
-- Test name grouping
-- Throughput (requests/second)
-- Response time statistics
-- Error rates
-- Percentiles
-- Request counts
+The project includes a GitHub Actions workflow for automated report generation and publishing to Confluence. To use it:
 
-#### K6
-- HTTP request duration metrics
-- Request counts and rates
-- Error statistics
-- Iteration metrics
-- Summary statistics
+1. Add the following secrets to your GitHub repository:
+   - `CONFLUENCE_API_TOKEN`: Your Confluence API token
+   - `CONFLUENCE_URL`: Your Confluence instance URL
+   - `OLLAMA_URL`: (Optional) Your Ollama server URL
+   - `USE_OLLAMA`: (Optional) Set to "true" to enable LLM analysis
 
-## Error Handling
+2. Manually trigger the workflow from the Actions tab with the following inputs:
+   - `workspace_id`: NeoLoad Workspace ID
+   - `result_id`: NeoLoad Result ID
+   - `test_name`: Name of the test
+   - `environment`: Test environment (e.g., DEV, QA, PROD)
+   - `confluence_space_key`: Confluence Space Key
+   - `ancestor_page_id`: Parent Confluence Page ID
+   - `page_title`: Title for the new Confluence page
 
-The scripts include comprehensive error handling for:
-- Missing environment variables
-- API authentication failures
-- Invalid file formats
-- Network errors
-- Data parsing errors
+The workflow will:
+1. Set up Python and install dependencies
+2. Run the report generator
+3. Publish the report to Confluence
 
-Any errors will cause the workflow to fail with a descriptive error message.
+### Supported File Types
 
-## Security
+1. **JMeter Results (.jtl or .csv)**
+   - Must contain columns: timeStamp, elapsed, label, responseCode, success
+   - Example: `results.jtl`
 
-- API tokens are stored as GitHub Secrets
-- All API calls use HTTPS
-- No credentials are stored in the code or repository
-- File contents are handled securely in GitHub Actions
+2. **k6 Results (.json)**
+   - Must contain metrics array with http_req_duration points
+   - Example: `results.json`
 
-## Contributing
+3. **NeoLoad Results (.csv)**
+   - Must contain columns: Time, Element, Response time, Success
+   - Example: `results.csv`
 
-Feel free to submit issues and enhancement requests! When contributing, please:
+## Output
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+The application generates:
+1. Console output showing test results
+2. HTML report with detailed metrics and graphs
+3. JSON report for programmatic access
+4. Metrics table for quick analysis
+5. LLM analysis (if enabled)
+
+## Development
+
+### Project Structure
+```
+perftest-result-confluence-writer/
+├── src/
+│   ├── processors/
+│   │   ├── __init__.py
+│   │   ├── base_processor.py
+│   │   ├── jmeter.py
+│   │   ├── k6.py
+│   │   └── neoload.py
+│   ├── reporters/
+│   │   ├── __init__.py
+│   │   ├── html_reporter.py
+│   │   ├── json_reporter.py
+│   │   └── console_reporter.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── confluence_client.py
+│   │   └── ollama_client.py
+│   ├── __init__.py
+│   └── main.py
+├── tests/
+│   ├── test_data/
+│   │   ├── jmeter_sample_results.jtl
+│   │   ├── k6_sample_results.json
+│   │   └── neoload_sample_results.csv
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_jmeter_processor.py
+│   ├── test_k6_processor.py
+│   └── test_neoload_processor.py
+├── .github/
+│   └── workflows/
+│       └── publish_neoload_report.yml
+├── setup.py
+└── README.md
+```
+
+### Running Tests
+
+```bash
+pytest
+```
 
 ## License
 
