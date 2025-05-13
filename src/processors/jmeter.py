@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 from datetime import datetime
+import pytz
 from jinja2 import Template
 from tabulate import tabulate
 from .base_processor import BaseProcessor
@@ -23,6 +24,7 @@ class JMeterProcessor(BaseProcessor):
         super().__init__(jtl_file)
         self.test_name = None
         self.environment = None
+        self.eastern_tz = pytz.timezone('US/Eastern')
         
     def read_data(self) -> None:
         """Read and parse the JMeter JTL file"""
@@ -30,8 +32,8 @@ class JMeterProcessor(BaseProcessor):
             # Read the JTL file
             self.df = pd.read_csv(self.input_file, sep=',', header=0)
             
-            # Convert timestamp to datetime
-            self.df['timeStamp'] = pd.to_datetime(self.df['timeStamp'], unit='ms')
+            # Convert timestamp to datetime and localize to Eastern time
+            self.df['timeStamp'] = pd.to_datetime(self.df['timeStamp'], unit='ms').dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
             
             # Calculate duration
             self.duration = (self.df['timeStamp'].max() - self.df['timeStamp'].min()).total_seconds()
@@ -268,11 +270,14 @@ class JMeterProcessor(BaseProcessor):
             response_time_graph = self.generate_response_time_graph()
             throughput_graph = self.generate_throughput_graph()
             
+            # Get current time in Eastern timezone
+            current_time = datetime.now(pytz.UTC).astimezone(self.eastern_tz)
+            
             logger.info("Rendering template...")
             html = template.render(
                 test_name=test_name,
                 environment=environment,
-                timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                timestamp=current_time.strftime('%Y-%m-%d %H:%M:%S %Z'),
                 total_requests=self.overall_stats['total_requests'],
                 total_errors=self.overall_stats['error_requests'],
                 error_rate=f"{self.overall_stats['error_rate']:.2%}",
@@ -301,11 +306,14 @@ class JMeterProcessor(BaseProcessor):
             # Calculate overall statistics
             stats = self.calculate_overall_stats()
             
+            # Get current time in Eastern timezone
+            current_time = datetime.now(pytz.UTC).astimezone(self.eastern_tz)
+            
             # Convert NumPy types to Python native types
             report = {
                 'test_name': self.test_name,
                 'environment': self.environment,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': current_time.isoformat(),
                 'duration': float(self.duration),
                 'overall_stats': {
                     'total_requests': int(stats['total_requests']),

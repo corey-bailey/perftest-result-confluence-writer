@@ -57,7 +57,7 @@ class HTMLReporter(BaseReporter):
                 test_duration=duration_str,
                 total_requests=data['total_requests'],
                 total_errors=data['error_requests'],
-                error_rate=f"{data['error_rate']:.2%}",
+                error_rate=f"{data['error_rate']:.2f}",
                 throughput=f"{data.get('throughput', 0):.2f}",
                 min_response=f"{data['min_response_time']:.2f}",
                 max_response=f"{data['max_response_time']:.2f}",

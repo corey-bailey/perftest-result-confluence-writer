@@ -12,7 +12,6 @@ from jinja2 import Environment, FileSystemLoader, Template
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 class BaseProcessor(ABC):
     """Base class for all processors"""
@@ -22,6 +21,7 @@ class BaseProcessor(ABC):
         self.input_file = input_file
         self.test_name = None
         self.environment = None
+        self.logger = logging.getLogger(self.__class__.__name__)
         
         # Set up Jinja2 environment
         template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'templates')
@@ -58,8 +58,8 @@ class BaseProcessor(ABC):
             with open(template_path, 'r') as f:
                 return f.read()
         except FileNotFoundError:
-            logger.error(f"Template file not found at {template_path}")
+            self.logger.error(f"Template file not found at {template_path}")
             raise FileNotFoundError(f"Template file not found at {template_path}. Please ensure the template exists in the config/templates directory.")
         except Exception as e:
-            logger.error(f"Error reading template file: {e}")
+            self.logger.error(f"Error reading template file: {e}")
             raise 

@@ -6,7 +6,12 @@ import json
 import logging
 import argparse
 from datetime import datetime
+import pytz
 from typing import Dict, Any, Optional
+
+# Add the project root directory to the Python path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
 
 from processors.jmeter import JMeterProcessor
 from processors.neoload import NeoLoadProcessor
@@ -21,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 CONFLUENCE_PARENT_PAGE_ID = os.getenv('CONFLUENCE_PARENT_PAGE_ID')
+EASTERN_TZ = pytz.timezone('US/Eastern')
 
 def save_report_files(results: Dict[str, Any], output_dir: str) -> None:
     """Save report files to disk"""
@@ -28,8 +34,8 @@ def save_report_files(results: Dict[str, Any], output_dir: str) -> None:
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
         
-        # Generate timestamp for filenames
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        # Generate timestamp for filenames in Eastern timezone
+        timestamp = datetime.now(pytz.UTC).astimezone(EASTERN_TZ).strftime('%Y%m%d_%H%M%S')
         
         # Save HTML report
         html_file = os.path.join(output_dir, f'report_{timestamp}.html')
@@ -56,8 +62,9 @@ def save_report_files(results: Dict[str, Any], output_dir: str) -> None:
 def update_confluence(report_html: str, test_name: str, environment: str, confluence_client: ConfluenceClient) -> None:
     """Update Confluence with test results"""
     try:
-        # Create page title
-        page_title = f"{test_name} - {environment} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        # Create page title with Eastern timezone timestamp
+        current_time = datetime.now(pytz.UTC).astimezone(EASTERN_TZ)
+        page_title = f"{test_name} - {environment} - {current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}"
         
         # Create page in Confluence
         confluence_client.create_page(
@@ -102,7 +109,7 @@ def main():
                 os.getenv('CONFLUENCE_USERNAME'),
                 os.getenv('CONFLUENCE_TOKEN'),
                 os.getenv('CONFLUENCE_SPACE_ID'),
-                os.getenv('CONFLUENCE_PARENT_PAGE_ID')]):
+                os.getenv('CONFLUENCE_ANCESTOR_PAGE_ID')]):
             try:
                 confluence_client = ConfluenceClient()
                 update_confluence(

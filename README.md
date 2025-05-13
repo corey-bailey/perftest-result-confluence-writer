@@ -57,6 +57,7 @@ pip install -e .
      # Ollama Configuration (Optional)
      OLLAMA_URL=http://localhost:11434
      USE_OLLAMA=true
+     OLLAMA_MODEL=llama2  # Specify which Ollama model to use (defaults to llama2)
      ```
 
 ## Usage
