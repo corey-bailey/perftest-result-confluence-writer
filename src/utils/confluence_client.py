@@ -13,11 +13,11 @@ class ConfluenceClient:
         self.base_url = os.getenv('CONFLUENCE_URL')
         self.username = os.getenv('CONFLUENCE_USERNAME')
         self.token = os.getenv('CONFLUENCE_TOKEN')
-        self.space_id = os.getenv('CONFLUENCE_SPACE_ID')
+        self.space_key = os.getenv('CONFLUENCE_SPACE_KEY')
         self.logger = logger
         
         # Validate required environment variables
-        if not all([self.base_url, self.username, self.token, self.space_id]):
+        if not all([self.base_url, self.username, self.token, self.space_key]):
             raise ValueError("Missing required Confluence environment variables")
         
         # Set up headers for API calls
@@ -35,7 +35,7 @@ class ConfluenceClient:
         self.logger.debug(f"Base URL: {self.base_url}")
         self.logger.debug(f"Username: {self.username}")
         self.logger.debug(f"Token: {'*' * len(self.token)}")
-        self.logger.debug(f"Space ID: {self.space_id}")
+        self.logger.debug(f"Space Key: {self.space_key}")
         
     def create_page(self, title: str, content: str, parent_id: str = None) -> dict:
         """Create a new page in Confluence."""
@@ -63,9 +63,10 @@ class ConfluenceClient:
                     data['ancestors'] = [{'id': parent_id}]
                 
                 response = requests.put(
-                    f"{self.base_url}/wiki/api/v2/pages/{page_id}",
+                    f"{self.base_url}/rest/api/content/{page_id}",
                     headers=self.headers,
-                    json=data
+                    json=data,
+                    verify=False
                 )
                 
                 if response.status_code == 200:
@@ -78,7 +79,7 @@ class ConfluenceClient:
                 data = {
                     'title': title,
                     'type': 'page',
-                    'spaceId': self.space_id,
+                    'space': {'key': self.space_key},
                     'body': {
                         'storage': {
                             'value': content,
@@ -91,12 +92,13 @@ class ConfluenceClient:
                     data['ancestors'] = [{'id': parent_id}]
                 
                 response = requests.post(
-                    f"{self.base_url}/wiki/api/v2/pages",
+                    f"{self.base_url}/rest/api/content",
                     headers=self.headers,
-                    json=data
+                    json=data,
+                    verify=False
                 )
                 
-                if response.status_code == 200:
+                if response.status_code == 201:
                     return response.json()
                 else:
                     self._log_response_details(response)
@@ -111,13 +113,15 @@ class ConfluenceClient:
         try:
             # Search for pages with the given title
             response = requests.get(
-                f"{self.base_url}/wiki/api/v2/pages",
+                f"{self.base_url}/rest/api/content",
                 headers=self.headers,
                 params={
                     'title': title,
-                    'space-id': self.space_id,
-                    'type': 'page'
-                }
+                    'spaceKey': self.space_key,
+                    'type': 'page',
+                    'expand': 'version'
+                },
+                verify=False
             )
             
             if response.status_code == 200:
