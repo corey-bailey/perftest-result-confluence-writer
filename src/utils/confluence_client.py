@@ -110,6 +110,7 @@ class ConfluenceClient:
                 
                 if response.status_code == 200:
                     self.logger.info(f"Successfully updated page {page_id}")
+                    self._log_successful_response(response, "Update page")
                     return response.json()
                 else:
                     self._log_response_details(response)
@@ -149,6 +150,7 @@ class ConfluenceClient:
                 if response.status_code == 201:
                     result = response.json()
                     self.logger.info(f"Successfully created page {result.get('id', 'unknown')}")
+                    self._log_successful_response(response, "Create page")
                     return result
                 else:
                     self._log_response_details(response)
@@ -189,9 +191,11 @@ class ConfluenceClient:
                 if results['results']:
                     page = results['results'][0]
                     self.logger.debug(f"Found existing page: {page['id']}")
+                    self._log_successful_response(response, "Search page")
                     return page
                 else:
                     self.logger.debug("No existing page found")
+                    self._log_successful_response(response, "Search page (no results)")
             else:
                 self._log_response_details(response)
                 
@@ -200,6 +204,22 @@ class ConfluenceClient:
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Error searching for page: {e}")
             raise
+            
+    def _log_successful_response(self, response: requests.Response, operation: str) -> None:
+        """Log successful response details for debugging."""
+        self.logger.info(f"Successful {operation} - Status: {response.status_code}")
+        self.logger.debug(f"Response headers: {dict(response.headers)}")
+        try:
+            response_data = response.json()
+            # Log only essential info for successful responses to avoid log spam
+            if 'id' in response_data:
+                self.logger.debug(f"Response contains page ID: {response_data['id']}")
+            if 'title' in response_data:
+                self.logger.debug(f"Response contains title: {response_data['title']}")
+            if 'results' in response_data:
+                self.logger.debug(f"Response contains {len(response_data['results'])} results")
+        except:
+            self.logger.debug(f"Response body (non-JSON): {response.text[:500]}...")
             
     def _log_response_details(self, response: requests.Response) -> None:
         """Log response details for debugging."""
